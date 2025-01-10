@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Weather</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #cities p {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>City Weather</h1>
+    <button onclick="updateWeather()">Update</button>
+    <div id="cities"></div>
+
+    <script>
+        async function updateWeather() {
+            const response = await fetch('/update');
+            const data = await response.json();
+            const container = document.getElementById('cities');
+            container.innerHTML = data.map(city => `<p>${city.name}: ${city.temp}°C</p >`).join('');
+        }
+    </script>
+</body>
+</html>
