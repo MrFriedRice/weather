@@ -1,5 +1,3 @@
-from idlelib.query import Query
-
 from fastapi import FastAPI, Request
 
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -9,8 +7,6 @@ from fastapi.templating import Jinja2Templates
 import csv
 
 import aiohttp
-
-import asyncio
 
 app = FastAPI()
 
