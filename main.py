@@ -1,3 +1,5 @@
+from idlelib.query import Query
+
 from fastapi import FastAPI, Request
 
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -12,27 +14,48 @@ import asyncio
 
 app = FastAPI()
 
-# 配置模板目录
 templates = Jinja2Templates(directory='templates')
 
-# 全局变量存储城市列表
-cities = {}
+cities = []
+
+
 def load_cities(file_path: str):
     with open(file_path, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            cities[row["city"]] = {
-                "latitude": float(row["latitude"]),
-                "longitude": float(row["longitude"]),
-            }
+            cities.append({
+                "city": row["city"],
+                "latitude": row["latitude"],
+                "longitude": row["longitude"]
+            })
+
+
 load_cities("europe.csv")
 
-# 路由：返回 HTML 首页
+
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 路由：更新城市天气
-@app.get("/update", response_class=JSONResponse)
+
+@app.get("/getAll", response_class=JSONResponse)
 async def update():
-    return cities
+    latitude = ",".join([row["latitude"] for row in cities])
+    longitude = ",".join([row["longitude"] for row in cities])
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            data = await response.json()
+            for index, row in enumerate(data):
+                row['city'] = cities[index]['city']
+            return data
+
+
+@app.get("/getInfo", response_class=JSONResponse)
+async def getInfo(request: Request):
+    latitude = request.query_params.get("latitude")
+    longitude = request.query_params.get("longitude")
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()

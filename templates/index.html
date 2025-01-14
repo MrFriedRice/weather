@@ -5,39 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>City Weather</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid red;
+        }
+
+        h1 {
             text-align: center;
         }
-        h1 {
-            color: #333;
+
+        .container {
+            border: 1px solid #000;
+            width: 500px;
+            margin-top: 10px;
+            padding: 10px;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
+
+        .btns {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
         }
-        #cities p {
+
+        .btns .left input {
+            width: 80px;
+            padding: 5px 10px;
+        }
+
+        .btns button {
             font-size: 18px;
-            margin: 5px 0;
+            padding: 5px 10px;
         }
+
+        ul {
+            margin-top: 10px;
+            border: 1px solid #000;
+
+        }
+
+        li {
+            list-style-type: none;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            height: 30px;
+        }
+
+        li div {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            border: 1px solid #000;
+            align-items: center;
+        }
+
+        .del {
+            color: red;
+        }
+
     </style>
 </head>
-<body>
-    <h1>City Weather</h1>
-    <button onclick="updateWeather()">Update</button>
-    <div id="cities"></div>
+<body onload="onload()">
+<h1>City Weather</h1>
+<div class="container">
+    <div class="btns">
+        <div class="left">
+            <input placeholder="city" id="city"/>
+            <input placeholder="longitude" id="longitude"/>
+            <input placeholder="latitude" id="latitude"/>
+            <button id="add">add</button>
+        </div>
+        <button id="reset">reset</button>
+    </div>
+    <ul id="ul">
+        <li class="header">
+            <div>city</div>
+            <div>longitude</div>
+            <div>latitude</div>
+            <div>temperature</div>
+            <div>Operation</div>
+        </li>
 
-    <script>
-        async function updateWeather() {
-            const response = await fetch('/update');
-            const data = await response.json();
-            console.log(data)
-            // const container = document.getElementById('cities');
-            // container.innerHTML = data.map(city => `<p>${city.name}: ${city.temp}°C</p >`).join('');
-        }
-    </script>
+    </ul>
+</div>
+<script>
+    function addListItem(city, longitude, latitude, temperature) {
+        const ul = document.getElementById('ul');
+
+        // 创建 li 元素
+        const li = document.createElement('li');
+        li.className = 'row'
+
+        // 创建每个 div 并设置内容
+        const cityDiv = document.createElement('div');
+        cityDiv.textContent = city;
+
+        const longitudeDiv = document.createElement('div');
+        longitudeDiv.textContent = longitude;
+
+        const latitudeDiv = document.createElement('div');
+        latitudeDiv.textContent = latitude;
+
+        const temperatureDiv = document.createElement('div');
+        temperatureDiv.textContent = temperature;
+
+        const operationDiv = document.createElement('div');
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'del';
+        deleteButton.addEventListener('click', () => li.remove());
+
+        operationDiv.appendChild(deleteButton);
+
+        li.appendChild(cityDiv);
+        li.appendChild(longitudeDiv);
+        li.appendChild(latitudeDiv);
+        li.appendChild(temperatureDiv);
+        li.appendChild(operationDiv);
+
+        ul.appendChild(li);
+    }
+
+    const onload = async () => {
+        GetAllWeather()
+
+        let resetDom = document.getElementById('reset')
+        resetDom.addEventListener('click', () => {
+            const rows = document.querySelectorAll('.row');
+            rows.forEach(row => row.remove())
+            GetAllWeather()
+        });
+
+        let addDom = document.getElementById('add')
+        addDom.addEventListener('click', async () => {
+            let city = document.getElementById('city').value
+            let longitude = document.getElementById('longitude').value
+            let latitude = document.getElementById('latitude').value
+            if (!city || !longitude || !latitude) {
+                alert("error:Required information is missing")
+                return
+            }
+            const response = await fetch(`/getInfo?longitude=${longitude}&latitude=${latitude}`);
+            const item = await response.json();
+            addListItem(city, item.longitude, item.latitude, `${item.current_weather.temperature}${item.current_weather_units.temperature}`)
+        });
+    }
+
+    async function GetAllWeather() {
+        const response = await fetch('/getAll');
+        const data = await response.json();
+        data.forEach(item => addListItem(item.city, item.longitude, item.latitude, `${item.current_weather.temperature}${item.current_weather_units.temperature}`))
+    }
+</script>
 </body>
+
+
 </html>
